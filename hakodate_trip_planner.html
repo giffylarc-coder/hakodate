@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@300;400;700;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1208; --paper: #f5f0e8; --cream: #ede8d8;
+    --red: #c0392b; --gold: #b8860b; --muted: #7a6e5f;
+    --day1: #2c5f5f; --day2: #5f2c3e; --day3: #2c4a5f; --day4: #3e5f2c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Zen Kaku Gothic New', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; overflow-x: hidden; }
+
+  /* LANG SWITCHER */
+  .lang-bar { background: #2a2010; display: flex; justify-content: center; gap: 4px; padding: 8px 16px; }
+  .lang-btn { padding: 5px 14px; font-size: 11px; font-weight: 700; letter-spacing: 1px; border: 1px solid #555; background: transparent; color: #aaa; cursor: pointer; font-family: 'Zen Kaku Gothic New', sans-serif; border-radius: 2px; transition: all 0.2s; }
+  .lang-btn.active { background: var(--red); color: white; border-color: var(--red); }
+
+  /* HEADER */
+  .header { background: var(--ink); color: var(--paper); padding: 22px 24px 18px; position: relative; overflow: hidden; }
+  .header::before { content: '函館'; position: absolute; right: -10px; top: -20px; font-size: 120px; font-weight: 900; opacity: 0.07; color: white; line-height: 1; pointer-events: none; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 26px; font-style: italic; line-height: 1.1; }
+  .header-title span { font-style: normal; font-size: 11px; font-family: 'Zen Kaku Gothic New', sans-serif; letter-spacing: 3px; display: block; color: #aaa; margin-bottom: 4px; }
+  .badge { background: var(--red); color: white; padding: 5px 12px; font-size: 11px; letter-spacing: 1.5px; font-weight: 700; white-space: nowrap; flex-shrink: 0; margin-top: 4px; }
+  .header-meta { margin-top: 14px; display: flex; gap: 16px; font-size: 11px; color: #aaa; flex-wrap: wrap; }
+  .header-meta strong { color: var(--paper); }
+
+  /* TABS */
+  .day-tabs { display: flex; background: var(--cream); border-bottom: 2px solid #ddd8cc; overflow-x: auto; scrollbar-width: none; }
+  .day-tabs::-webkit-scrollbar { display: none; }
+  .day-tab { padding: 13px 18px; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; cursor: pointer; white-space: nowrap; border-bottom: 3px solid transparent; margin-bottom: -2px; color: var(--muted); transition: all 0.2s; flex-shrink: 0; background: none; border-top: none; border-left: none; border-right: none; font-family: 'Zen Kaku Gothic New', sans-serif; }
+  .day-tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .day-tab:hover:not(.active) { color: var(--ink); background: rgba(0,0,0,0.03); }
+
+  /* PANELS */
+  .day-panel { display: none; padding: 0 0 80px; }
+  .day-panel.active { display: block; }
+  .day-hero { padding: 18px 20px 14px; border-bottom: 1px solid #ddd8cc; }
+  .day-num { font-size: 10px; letter-spacing: 3px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+  .day-title { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; line-height: 1.2; }
+  .day-desc { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.6; }
+  .day-accent { width: 36px; height: 3px; margin-top: 10px; border-radius: 2px; }
+  .section-label { padding: 14px 20px 6px; font-size: 10px; letter-spacing: 3px; font-weight: 700; color: var(--muted); border-bottom: 1px solid #eee8d8; }
+
+  /* TIMELINE */
+  .timeline { padding: 6px 0; }
+  .stop { display: flex; cursor: pointer; transition: background 0.15s; }
+  .stop:hover { background: rgba(0,0,0,0.025); }
+  .stop.expanded { background: rgba(0,0,0,0.03); }
+  .stop-time-col { width: 68px; flex-shrink: 0; padding: 14px 0 14px 18px; }
+  .stop-time { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .stop-dur { font-size: 10px; color: #bbb; margin-top: 2px; }
+  .stop-line-col { width: 26px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; padding-top: 17px; }
+  .stop-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid; background: var(--paper); flex-shrink: 0; z-index: 1; }
+  .stop-line { width: 2px; flex: 1; background: #ddd8cc; min-height: 18px; }
+  .stop:last-child .stop-line { display: none; }
+  .stop-content { flex: 1; padding: 12px 14px 12px 8px; min-width: 0; }
+  .stop-name { font-size: 13px; font-weight: 700; line-height: 1.3; }
+  .stop-type { font-size: 10px; letter-spacing: 1.5px; color: var(--muted); margin-top: 2px; font-weight: 700; }
+  .stop-note { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.6; display: none; }
+  .stop.expanded .stop-note { display: block; }
+  .stop-chevron { font-size: 9px; color: #ccc; margin-top: 3px; transition: transform 0.2s; display: inline-block; }
+  .stop.expanded .stop-chevron { transform: rotate(180deg); }
+
+  /* BOXES */
+  .tips-box { margin: 4px 20px 20px; background: var(--ink); color: var(--paper); padding: 14px 16px; border-radius: 2px; }
+  .tips-title { font-size: 10px; letter-spacing: 2px; font-weight: 700; color: #aaa; margin-bottom: 8px; }
+  .tip-item { font-size: 12px; line-height: 1.6; color: #ddd; padding-left: 14px; position: relative; margin-bottom: 5px; }
+  .tip-item::before { content: '—'; position: absolute; left: 0; color: var(--gold); font-weight: bold; }
+  .warning { margin: 0 20px 14px; background: #fff8f0; border-left: 3px solid var(--red); padding: 9px 12px; font-size: 12px; color: #5a3a2a; line-height: 1.5; }
+  .warning strong { color: var(--red); }
+
+  /* BOTTOM NAV */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--ink); display: flex; z-index: 100; }
+  .nav-btn { flex: 1; padding: 12px 6px; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #888; background: none; border: none; cursor: pointer; font-family: 'Zen Kaku Gothic New', sans-serif; transition: color 0.2s; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .nav-btn .icon { font-size: 17px; }
+  .nav-btn.active { color: var(--paper); }
+
+  /* OVERVIEW */
+  .overview { padding: 20px; display: none; padding-bottom: 80px; }
+  .overview.active { display: block; }
+  .ov-card { border: 1px solid #ddd8cc; margin-bottom: 12px; cursor: pointer; transition: border-color 0.15s; }
+  .ov-card:hover { border-color: var(--ink); }
+  .ov-card-header { padding: 13px 14px; display: flex; align-items: center; gap: 12px; }
+  .ov-day-num { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; color: white; flex-shrink: 0; border-radius: 2px; }
+  .ov-info { flex: 1; min-width: 0; }
+  .ov-title { font-family: 'Playfair Display', serif; font-size: 14px; font-style: italic; }
+  .ov-stops { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .ov-arrow { color: var(--muted); font-size: 14px; }
+
+  /* TIPS PAGE */
+  .tips-page { padding: 20px; display: none; padding-bottom: 80px; }
+  .tips-page.active { display: block; }
+  .tip-card { background: white; border: 1px solid #ddd8cc; padding: 14px; margin-bottom: 10px; }
+  .tip-card-icon { font-size: 22px; margin-bottom: 6px; }
+  .tip-card-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+  .tip-card-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .page-title { font-family: 'Playfair Display', serif; font-size: 20px; font-style: italic; margin-bottom: 4px; }
+  .page-sub { font-size: 11px; color: var(--muted); letter-spacing: 2px; font-weight: 700; margin-bottom: 18px; }
+</style>
+</head>
+<body>
+
+<!-- LANG BAR -->
+<div class="lang-bar">
+  <button class="lang-btn active" onclick="setLang('th')">🇹🇭 ไทย</button>
+  <button class="lang-btn" onclick="setLang('ja')">🇯🇵 日本語</button>
+  <button class="lang-btn" onclick="setLang('en')">🇬🇧 English</button>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-top">
+    <div class="header-title">
+      <span>HAKODATE · HOKKAIDO</span>
+      <span class="t" data-th="Hakodate<br>Trip Guide" data-ja="函館<br>旅行ガイド" data-en="Hakodate<br>Trip Guide"></span>
+    </div>
+    <div class="badge t" data-th="4 วัน 3 คืน" data-ja="4日3泊" data-en="4D · 3N"></div>
+  </div>
+  <div class="header-meta">
+    <div>🚗 <strong class="t" data-th="รถเช่า" data-ja="レンタカー" data-en="Rental Car"></strong></div>
+    <div>👫 <strong class="t" data-th="2 คน" data-ja="2名" data-en="2 Pax"></strong></div>
+    <div class="t" data-th="🍣 อาหารทะเล · ประวัติศาสตร์ · ธรรมชาติ" data-ja="🍣 海鮮・歴史・自然" data-en="🍣 Seafood · History · Nature"></div>
+  </div>
+</div>
+
+<!-- DAY TABS -->
+<div class="day-tabs" id="dayTabs">
+  <button class="day-tab active" onclick="showDay(1)">DAY 1</button>
+  <button class="day-tab" onclick="showDay(2)">DAY 2</button>
+  <button class="day-tab" onclick="showDay(3)">DAY 3</button>
+  <button class="day-tab" onclick="showDay(4)">DAY 4</button>
+</div>
+
+<!-- ===== DAY 1 ===== -->
+<div class="day-panel active" id="day1panel">
+  <div class="day-hero">
+    <div class="day-num">DAY 1 · ARRIVAL</div>
+    <div class="day-title t" data-th="City Highlights &amp; Night View" data-ja="市内観光 &amp; 夜景" data-en="City Highlights &amp; Night View"></div>
+    <div class="day-desc t" data-th="เมืองท่าประวัติศาสตร์ ป้อมดาว และวิวกลางคืนสุดประทับใจ" data-ja="歴史ある港町、星形要塞、そして忘れられない夜景" data-en="Historic port city, star fort, and unforgettable night view"></div>
+    <div class="day-accent" style="background:var(--day1)"></div>
+  </div>
+  <div class="section-label t" data-th="แผนการเดินทาง" data-ja="スケジュール" data-en="ITINERARY"></div>
+  <div class="timeline">
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">07:30</div><div class="stop-dur t" data-th="60 นาที" data-ja="60分" data-en="60 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day1)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="ตลาดเช้าฮาโกดาเตะ" data-ja="函館朝市" data-en="Hakodate Morning Market"></div>
+        <div class="stop-type t" data-th="MORNING MARKET · อาหาร" data-ja="朝市・グルメ" data-en="MORNING MARKET · Food"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="เริ่มต้นวันด้วย kaisendon สด — อูนิ, ปู, แซลมอน ตลาดปิด 14:00 ห้ามพลาด!" data-ja="新鮮な海鮮丼でスタート — ウニ・カニ・サーモン。14時閉店なので早めに！" data-en="Start with a fresh kaisendon — uni, crab, salmon. Closes at 14:00, don't miss it!"></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">09:00</div><div class="stop-dur t" data-th="90 นาที" data-ja="90分" data-en="90 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day1)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="อุทยานโกเรียวกาคุ" data-ja="五稜郭公園" data-en="Goryokaku Park"></div>
+        <div class="stop-type t" data-th="HISTORIC FORT · ธรรมชาติ" data-ja="史跡・自然" data-en="HISTORIC FORT · Nature"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="ป้อมดาวแบบตะวันตกแห่งแรกของญี่ปุ่น ขึ้น Goryokaku Tower ชมรูปทรงดาวจากมุมสูง" data-ja="日本初の西洋式星形要塞。五稜郭タワーから星形を一望できます" data-en="Japan's first Western-style star fort. Climb the tower for a stunning aerial view."></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">11:00</div><div class="stop-dur t" data-th="90 นาที" data-ja="90分" data-en="90 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day1)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="ย่านโมโตมาชิ" data-ja="元町地区" data-en="Motomachi District"></div>
+        <div class="stop-type t" data-th="HISTORIC DISTRICT · ประวัติศาสตร์" data-ja="歴史地区" data-en="HISTORIC DISTRICT · Culture"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="เดินชมย่านอาณานิคมบนเนินเขา — โบสถ์ตะวันตก วิวท่าเรือ เหมาะทานอาหารกลางวัน" data-ja="丘の上の洋風建築街 — 教会・旧領事館・港の景色。ランチにも最適" data-en="Colonial hillside quarter — Western churches, old consulates, harbor views. Great for lunch."></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">13:30</div><div class="stop-dur t" data-th="75 นาที" data-ja="75分" data-en="75 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day1)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="คลังสีแดง Kanemori" data-ja="金森赤レンガ倉庫" data-en="Kanemori Red Brick Warehouse"></div>
+        <div class="stop-type t" data-th="WATERFRONT · ช้อปปิ้ง" data-ja="ウォーターフロント・ショッピング" data-en="WATERFRONT · Shopping"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="คลังสินค้าปี 1909 ริมท่าเรือ แปลงเป็นร้านค้าและคาเฟ่ เหมาะซื้อของฝากและจิบกาแฟชมวิวอ่าว" data-ja="1909年築の倉庫群がショップとカフェに。お土産購入や湾を望むコーヒータイムに最適" data-en="1909 port warehouses turned shops & cafes. Great for souvenirs and bay-view coffee."></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">19:00</div><div class="stop-dur t" data-th="90 นาที" data-ja="90分" data-en="90 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day1)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="กระเช้าภูเขาฮาโกดาเตะ" data-ja="函館山ロープウェイ" data-en="Mt. Hakodate Ropeway"></div>
+        <div class="stop-type t" data-th="NIGHT VIEW · ไฮไลต์" data-ja="夜景・必見" data-en="NIGHT VIEW · Highlight"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="⭐ หนึ่งใน 3 วิวกลางคืนที่ดีที่สุดของญี่ปุ่น มาช่วงพระอาทิตย์ตก กระเช้าเปิดถึง 21:00" data-ja="⭐ 日本三大夜景のひとつ。夕暮れ時に合わせて訪問を。ロープウェイは21時まで" data-en="⭐ One of Japan's top 3 night views. Arrive at sunset. Ropeway runs until 21:00."></div>
+      </div>
+    </div>
+  </div>
+  <div class="tips-box">
+    <div class="tips-title t" data-th="TIPS · วันที่ 1" data-ja="ヒント · 1日目" data-en="TIPS · Day 1"></div>
+    <div class="tip-item t" data-th="ตลาดเช้าเปิด 06:00 ปิด 14:00 — ต้องไปเช้า!" data-ja="朝市は6時開店、14時閉店。早めの訪問がおすすめ" data-en="Morning market opens 06:00, closes 14:00 — go early!"></div>
+    <div class="tip-item t" data-th="กระเช้ามีคิวยาวตอนค่ำ ไปช่วง 18:30 จะดีที่สุด" data-ja="夜のロープウェイは混雑します。18:30頃が狙い目" data-en="Ropeway gets crowded at night — aim to arrive around 18:30."></div>
+  </div>
+</div>
+
+<!-- ===== DAY 2 ===== -->
+<div class="day-panel" id="day2panel">
+  <div class="day-hero">
+    <div class="day-num">DAY 2 · COASTAL</div>
+    <div class="day-title t" data-th="Eastern Coast &amp; Onsen Day" data-ja="東海岸 &amp; 温泉の日" data-en="Eastern Coast &amp; Onsen Day"></div>
+    <div class="day-desc t" data-th="ชายฝั่งตะวันออก อารามสงบ กุดน้ำพุ และน้ำพุร้อน" data-ja="東海岸ドライブ、修道院、間欠泉、そして温泉でリラックス" data-en="Scenic coastal drive, serene monastery, geyser park, and hot springs."></div>
+    <div class="day-accent" style="background:var(--day2)"></div>
+  </div>
+  <div class="section-label t" data-th="แผนการเดินทาง" data-ja="スケジュール" data-en="ITINERARY"></div>
+  <div class="timeline">
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">09:00</div><div class="stop-dur t" data-th="60 นาที" data-ja="60分" data-en="60 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day2)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="อารามแทรปพิสทีน" data-ja="トラピスチヌ修道院" data-en="Trappistine Abbey"></div>
+        <div class="stop-type t" data-th="MONASTERY · ประวัติศาสตร์" data-ja="修道院・歴史" data-en="MONASTERY · History"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="อารามสไตล์ฝรั่งเศส-โกธิกสงบงาม แวะร้านค้าซื้อคุกกี้เนยและคาราเมลชื่อดัง" data-ja="フランス・ゴシック様式の静かな修道院。バタークッキーやキャラメルのお土産を忘れずに" data-en="Serene French-Gothic convent. Buy the famous butter cookies and caramels at the gift shop."></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">11:00</div><div class="stop-dur t" data-th="75 นาที" data-ja="75分" data-en="75 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day2)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="สวนน้ำพุ Shikabe" data-ja="鹿部間欠泉公園" data-en="Shikabe Geyser Park"></div>
+        <div class="stop-type t" data-th="GEYSER PARK · ธรรมชาติ" data-ja="間欠泉・自然" data-en="GEYSER PARK · Nature"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="แช่เท้าในบ่อออนเซ็นระหว่างรอน้ำพุพุ่ง ลองอาหารทะเลนึ่งสดด้วย!" data-ja="足湯に浸かりながら間欠泉の噴出を待つ体験。新鮮な蒸し海鮮もぜひ" data-en="Soak feet in the footbath while waiting for the geyser to erupt. Try the fresh steamed seafood!"></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">14:00</div><div class="stop-dur t" data-th="60 นาที" data-ja="60分" data-en="60 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day2)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="แหลมทาชิมาชิ" data-ja="立待岬" data-en="Cape Tachimachi"></div>
+        <div class="stop-type t" data-th="SCENIC CAPE · ธรรมชาติ" data-ja="景勝地・自然" data-en="SCENIC CAPE · Nature"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="วิวทะเล 180° จากหน้าผา สถานที่ลับที่นักท่องเที่ยวน้อยรู้จัก เหมาะถ่ายรูปมาก" data-ja="崖上から180°の大海原。観光客が少ない穴場スポットで絶好の撮影ポイント" data-en="180° panoramic sea views from clifftop trails. A hidden gem — great for photos."></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">16:00</div><div class="stop-dur t" data-th="120 นาที" data-ja="120分" data-en="120 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day2)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="ยูโนคาวะ ออนเซ็น" data-ja="湯の川温泉" data-en="Yunokawa Onsen"></div>
+        <div class="stop-type t" data-th="HOT SPRING · ที่พัก" data-ja="温泉・宿泊" data-en="HOT SPRING · Stay"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="ออนเซ็นที่ดีที่สุดของฮาโกดาเตะ เช็คอินโรงแรมริวคัง อาบน้ำพุร้อน และทาน kaiseki" data-ja="函館最高の温泉エリア。旅館にチェックインし、温泉と懐石料理を楽しんで" data-en="Hakodate's premier hot spring area. Check into a ryokan, soak, and enjoy a kaiseki dinner."></div>
+      </div>
+    </div>
+  </div>
+  <div class="warning">⚠️ <strong class="t" data-th="หมายเหตุ:" data-ja="注意:" data-en="Note:"></strong> <span class="t" data-th="Shikabe Geyser Park ปิดทุกวันพุธ — โปรดวางแผนให้เหมาะสม" data-ja="鹿部間欠泉公園は毎週水曜日が定休日です" data-en="Shikabe Geyser Park is closed every Wednesday."></span></div>
+  <div class="tips-box">
+    <div class="tips-title t" data-th="TIPS · วันที่ 2" data-ja="ヒント · 2日目" data-en="TIPS · Day 2"></div>
+    <div class="tip-item t" data-th="ขับรถไปทางตะวันออกตามชายฝั่ง ทิวทัศน์สวยมาก" data-ja="東海岸沿いのドライブは景色が素晴らしい" data-en="The coastal drive east has stunning scenery."></div>
+    <div class="tip-item t" data-th="จองโรงแรมริวคังที่ยูโนคาวะล่วงหน้า" data-ja="湯の川温泉の旅館は事前予約がおすすめ" data-en="Book a Yunokawa ryokan in advance."></div>
+  </div>
+</div>
+
+<!-- ===== DAY 3 ===== -->
+<div class="day-panel" id="day3panel">
+  <div class="day-hero">
+    <div class="day-num">DAY 3 · NATURE</div>
+    <div class="day-title t" data-th="Onuma National Park Escape" data-ja="大沼国定公園 自然の旅" data-en="Onuma National Park Escape"></div>
+    <div class="day-desc t" data-th="อุทยานแห่งชาติสวยงาม ปั่นจักรยานริมทะเลสาบ และดื่มเบียร์ท้องถิ่น" data-ja="湖畔サイクリング、火山の景色、そして地元のクラフトビール" data-en="Lakeside cycling, volcanic scenery, local history, and craft beer."></div>
+    <div class="day-accent" style="background:var(--day3)"></div>
+  </div>
+  <div class="section-label t" data-th="แผนการเดินทาง" data-ja="スケジュール" data-en="ITINERARY"></div>
+  <div class="timeline">
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">09:00</div><div class="stop-dur t" data-th="240 นาที" data-ja="240分" data-en="240 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day3)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="อุทยานโอนุมะ" data-ja="大沼国定公園" data-en="Onuma Quasi-National Park"></div>
+        <div class="stop-type t" data-th="NATIONAL PARK · ธรรมชาติ" data-ja="国定公園・自然" data-en="NATIONAL PARK · Nature"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="เช่าจักรยานปั่นรอบทะเลสาบ ชมวิวภูเขาไฟ Mt. Komagatake ทุกฤดูกาลสวยงาม" data-ja="自転車をレンタルして湖畔を一周。駒ヶ岳の絶景は四季を通じて美しい" data-en="Rent a bike and cycle the lake trail with views of Mt. Komagatake — beautiful every season."></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">14:00</div><div class="stop-dur t" data-th="60 นาที" data-ja="60分" data-en="60 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day3)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="พิพิธภัณฑ์ประวัติศาสตร์นาเนะ" data-ja="七飯町歴史館" data-en="Nanae Town History Museum"></div>
+        <div class="stop-type t" data-th="MUSEUM · ประวัติศาสตร์" data-ja="博物館・歴史" data-en="MUSEUM · History"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="พิพิธภัณฑ์น่าแปลกใจ เล่าประวัติตั้งแต่ยุค Jomon ถึงอิทธิพลปรัสเซียในฮอกไกโด" data-ja="縄文土器からプロイセンの影響まで北海道の歴史を掘り下げる意外と面白い博物館" data-en="A surprisingly rich museum — from Jomon pottery to Prussian influence on Hokkaido."></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">18:00</div><div class="stop-dur t" data-th="90 นาที" data-ja="90分" data-en="90 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day3)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="Hakodate Beer" data-ja="函館ビヤホール" data-en="Hakodate Beer"></div>
+        <div class="stop-type t" data-th="CRAFT BREWERY · อาหารค่ำ" data-ja="クラフトビール・夕食" data-en="CRAFT BREWERY · Dinner"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="โรงเบียร์ท้องถิ่นริมน้ำ เบียร์คราฟต์อร่อยมาก แนะนำสั่งเบียร์เป็นหลัก" data-ja="ウォーターフロントのクラフトビール醸造所。ビールが主役！ライブ演奏がある日も" data-en="Waterfront craft brewery. The beer is the star! Live music on some nights."></div>
+      </div>
+    </div>
+  </div>
+  <div class="warning">⚠️ <strong class="t" data-th="หมายเหตุ:" data-ja="注意:" data-en="Note:"></strong> <span class="t" data-th="Hakodate Beer ปิดวันพุธและพฤหัส" data-ja="函館ビヤホールは水・木曜定休" data-en="Hakodate Beer is closed Wednesday & Thursday."></span></div>
+  <div class="tips-box">
+    <div class="tips-title t" data-th="TIPS · วันที่ 3" data-ja="ヒント · 3日目" data-en="TIPS · Day 3"></div>
+    <div class="tip-item t" data-th="อุทยานโอนุมะห่างออกไป ~30 กม. ขับรถ ~40 นาที" data-ja="大沼公園は函館から約30km、車で約40分" data-en="Onuma Park is ~30km from Hakodate, about 40 min by car."></div>
+    <div class="tip-item t" data-th="เช่าจักรยานที่ทางเข้าอุทยาน มีทั้งแบบธรรมดาและ e-bike" data-ja="公園入口で自転車レンタル可。電動アシスト自転車もあり" data-en="Rent bikes at the park entrance. E-bikes available too."></div>
+  </div>
+</div>
+
+<!-- ===== DAY 4 ===== -->
+<div class="day-panel" id="day4panel">
+  <div class="day-hero">
+    <div class="day-num">DAY 4 · FAREWELL</div>
+    <div class="day-title t" data-th="Last Morning &amp; Departure" data-ja="最終日 &amp; 出発" data-en="Last Morning &amp; Departure"></div>
+    <div class="day-desc t" data-th="อาหารเช้าสุดท้าย ช้อปของฝาก และอำลาฮาโกดาเตะ" data-ja="最後の朝食、お土産探し、そして函館へのお別れ" data-en="Final breakfast, last-minute souvenirs, and farewell to Hakodate."></div>
+    <div class="day-accent" style="background:var(--day4)"></div>
+  </div>
+  <div class="section-label t" data-th="แผนการเดินทาง" data-ja="スケジュール" data-en="ITINERARY"></div>
+  <div class="timeline">
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">07:30</div><div class="stop-dur t" data-th="60 นาที" data-ja="60分" data-en="60 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day4)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="ตลาดเช้าฮาโกดาเตะ" data-ja="函館朝市（最終日）" data-en="Hakodate Morning Market"></div>
+        <div class="stop-type t" data-th="MORNING MARKET · อาหาร" data-ja="朝市・グルメ" data-en="MORNING MARKET · Food"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="อาหารเช้าสุดท้าย! ลองอาหารที่ยังไม่ได้ทาน ซื้ออาหารทะเลแห้งและขนมฮอกไกโดกลับบ้าน" data-ja="最後の朝食！食べ忘れたものを。乾物や北海道スイーツのお土産も忘れずに" data-en="Final breakfast! Try anything you missed. Stock up on dried seafood and Hokkaido snacks."></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">09:30</div><div class="stop-dur t" data-th="60 นาที" data-ja="60分" data-en="60 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day4)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="ฮาโกดาเตะ เมจิคัง" data-ja="函館明治館" data-en="Hakodate Meijikan"></div>
+        <div class="stop-type t" data-th="SHOPPING · ของฝาก" data-ja="ショッピング・お土産" data-en="SHOPPING · Souvenirs"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="อาคารไปรษณีย์ยุค Meiji แปลงเป็นร้านค้าน่ารัก มีกล่องดนตรีและของฝากสไตล์ญี่ปุ่น" data-ja="明治時代の郵便局を改装したショッピング施設。オルゴールやテディベアが人気" data-en="Meiji-era post office turned charming shops. Music boxes and Japanese souvenirs."></div>
+      </div>
+    </div>
+    <div class="stop" onclick="toggleStop(this)">
+      <div class="stop-time-col"><div class="stop-time">11:00</div><div class="stop-dur t" data-th="45 นาที" data-ja="45分" data-en="45 min"></div></div>
+      <div class="stop-line-col"><div class="stop-dot" style="border-color:var(--day4)"></div><div class="stop-line"></div></div>
+      <div class="stop-content">
+        <div class="stop-name t" data-th="แหลมทาชิมาชิ" data-ja="立待岬（お別れ）" data-en="Cape Tachimachi"></div>
+        <div class="stop-type t" data-th="FAREWELL · วิวทะเล" data-ja="お別れ・絶景" data-en="FAREWELL · Scenic"></div>
+        <div class="stop-chevron">▼</div>
+        <div class="stop-note t" data-th="จุดสุดท้ายก่อนกลับ ชมวิวทะเลกว้าง สูดอากาศบริสุทธิ์ และอำลาฮาโกดาเตะ 🌊" data-ja="帰路につく前の最後のスポット。広大な海を眺め、函館に別れを告げて 🌊" data-en="Final stop before departure. Wide ocean views, fresh air, and a farewell to Hakodate. 🌊"></div>
+      </div>
+    </div>
+  </div>
+  <div class="tips-box">
+    <div class="tips-title t" data-th="TIPS · วันที่ 4" data-ja="ヒント · 4日目" data-en="TIPS · Day 4"></div>
+    <div class="tip-item t" data-th="คืนรถเช่าก่อนเวลาเที่ยงถ้าเดินทางช่วงบ่าย" data-ja="午後出発の場合は正午前にレンタカーを返却して" data-en="Return rental car before noon if departing in the afternoon."></div>
+    <div class="tip-item t" data-th="สนามบินฮาโกดาเตะอยู่ห่าง ~15 นาทีจากใจกลางเมือง" data-ja="函館空港は市内中心部から車で約15分" data-en="Hakodate Airport is ~15 min from the city center."></div>
+  </div>
+</div>
+
+<!-- OVERVIEW -->
+<div class="overview" id="overviewPage">
+  <div class="page-title t" data-th="ภาพรวมทริป" data-ja="旅程の概要" data-en="Trip Overview"></div>
+  <div class="page-sub">4 DAYS · HAKODATE</div>
+  <div class="ov-card" onclick="switchToDay(1)">
+    <div class="ov-card-header">
+      <div class="ov-day-num" style="background:var(--day1)">D1</div>
+      <div class="ov-info">
+        <div class="ov-title t" data-th="City Highlights & Night View" data-ja="市内観光 & 夜景" data-en="City Highlights & Night View"></div>
+        <div class="ov-stops t" data-th="ตลาดเช้า · ป้อมดาว · โมโตมาชิ · กระเช้า" data-ja="朝市・五稜郭・元町・ロープウェイ" data-en="Morning Market · Fort · Motomachi · Ropeway"></div>
+      </div>
+      <div class="ov-arrow">›</div>
+    </div>
+  </div>
+  <div class="ov-card" onclick="switchToDay(2)">
+    <div class="ov-card-header">
+      <div class="ov-day-num" style="background:var(--day2)">D2</div>
+      <div class="ov-info">
+        <div class="ov-title t" data-th="Eastern Coast & Onsen" data-ja="東海岸 & 温泉" data-en="Eastern Coast & Onsen"></div>
+        <div class="ov-stops t" data-th="อารามแทรปพิสทีน · น้ำพุ · แหลมทาชิมาชิ · ออนเซ็น" data-ja="修道院・間欠泉・立待岬・温泉" data-en="Monastery · Geyser · Cape · Hot Springs"></div>
+      </div>
+      <div class="ov-arrow">›</div>
+    </div>
+  </div>
+  <div class="ov-card" onclick="switchToDay(3)">
+    <div class="ov-card-header">
+      <div class="ov-day-num" style="background:var(--day3)">D3</div>
+      <div class="ov-info">
+        <div class="ov-title t" data-th="Onuma Nature Escape" data-ja="大沼自然の旅" data-en="Onuma Nature Escape"></div>
+        <div class="ov-stops t" data-th="อุทยานโอนุมะ · พิพิธภัณฑ์ · Hakodate Beer" data-ja="大沼公園・七飯歴史館・函館ビール" data-en="Onuma Park · History Museum · Craft Beer"></div>
+      </div>
+      <div class="ov-arrow">›</div>
+    </div>
+  </div>
+  <div class="ov-card" onclick="switchToDay(4)">
+    <div class="ov-card-header">
+      <div class="ov-day-num" style="background:var(--day4)">D4</div>
+      <div class="ov-info">
+        <div class="ov-title t" data-th="Farewell Morning" data-ja="最終日の朝" data-en="Farewell Morning"></div>
+        <div class="ov-stops t" data-th="ตลาดเช้า · เมจิคัง · แหลมทาชิมาชิ" data-ja="朝市・明治館・立待岬" data-en="Morning Market · Meijikan · Cape Tachimachi"></div>
+      </div>
+      <div class="ov-arrow">›</div>
+    </div>
+  </div>
+</div>
+
+<!-- TIPS PAGE -->
+<div class="tips-page" id="tipsPage">
+  <div class="page-title t" data-th="เคล็ดลับการเดินทาง" data-ja="旅のヒント" data-en="Travel Tips"></div>
+  <div class="page-sub">TIPS &amp; INFO</div>
+  <div class="tip-card">
+    <div class="tip-card-icon">🚗</div>
+    <div class="tip-card-title t" data-th="รถเช่า" data-ja="レンタカー" data-en="Rental Car"></div>
+    <div class="tip-card-body t" data-th="ฮาโกดาเตะกะทัดรัดและเหมาะกับรถมาก ระยะทางส่วนใหญ่ไม่เกิน 30 นาที แนะนำรับรถที่สถานีหรือสนามบิน" data-ja="函館はレンタカーに最適。ほとんどの観光地は30分以内。駅か空港で借りるのが便利" data-en="Hakodate is perfect for driving. Most spots are within 30 min. Pick up at the station or airport."></div>
+  </div>
+  <div class="tip-card">
+    <div class="tip-card-icon">🌙</div>
+    <div class="tip-card-title t" data-th="วิวกลางคืน" data-ja="夜景" data-en="Night View"></div>
+    <div class="tip-card-body t" data-th="กระเช้าภูเขาฮาโกดาเตะมีคิวยาวตอนค่ำ ไปช่วง 18:30 จะได้ทั้งพระอาทิตย์ตกและไฟกลางคืน" data-ja="夜のロープウェイは混みます。18:30頃に行けば夕日と夜景の両方が楽しめます" data-en="The ropeway gets crowded. Arriving at 18:30 gives you both the sunset and the full night view."></div>
+  </div>
+  <div class="tip-card">
+    <div class="tip-card-icon">🍣</div>
+    <div class="tip-card-title t" data-th="อาหาร" data-ja="グルメ" data-en="Food"></div>
+    <div class="tip-card-body t" data-th="ฮาโกดาเตะขึ้นชื่อเรื่องอูนิ ปู และหมึก ลอง kaisendon ที่ตลาดเช้า และ kaiseki dinner ที่ยูโนคาวะ" data-ja="函館はウニ・カニ・イカが名物。朝市で海鮮丼、湯の川で懐石を" data-en="Hakodate is famous for uni, crab, and squid. Try kaisendon at the market, kaiseki at the onsen."></div>
+  </div>
+  <div class="tip-card">
+    <div class="tip-card-icon">📅</div>
+    <div class="tip-card-title t" data-th="วันปิดทำการ" data-ja="定休日" data-en="Closed Days"></div>
+    <div class="tip-card-body t" data-th="Shikabe Geyser: ปิดพุธ • Hakodate Beer: ปิดพุธ-พฤหัส • ตลาดเช้า: เปิดทุกวัน 06:00–14:00" data-ja="鹿部間欠泉: 水曜定休 • 函館ビール: 水・木定休 • 朝市: 毎日6〜14時" data-en="Shikabe Geyser: closed Wed • Hakodate Beer: closed Wed–Thu • Market: daily 06:00–14:00"></div>
+  </div>
+  <div class="tip-card">
+    <div class="tip-card-icon">✈️</div>
+    <div class="tip-card-title t" data-th="การเดินทาง" data-ja="アクセス" data-en="Getting There"></div>
+    <div class="tip-card-body t" data-th="สนามบินฮาโกดาเตะอยู่ห่างจากใจกลางเมือง ~15 นาที มีเที่ยวบินตรงจากนาโกย่า" data-ja="函館空港は市内から約15分。名古屋から直行便あり" data-en="Hakodate Airport is ~15 min from the city center. Direct flights available from Nagoya."></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-btn active" id="navDays" onclick="switchNav('days')">
+    <span class="icon">🗓</span><span class="t" data-th="รายวัน" data-ja="日程" data-en="Days"></span>
+  </button>
+  <button class="nav-btn" id="navOverview" onclick="switchNav('overview')">
+    <span class="icon">📋</span><span class="t" data-th="ภาพรวม" data-ja="概要" data-en="Overview"></span>
+  </button>
+  <button class="nav-btn" id="navTips" onclick="switchNav('tips')">
+    <span class="icon">💡</span><span class="t" data-th="เคล็ดลับ" data-ja="ヒント" data-en="Tips"></span>
+  </button>
+</div>
+
+<script>
+let currentDay = 1;
+let currentNav = 'days';
+let currentLang = 'th';
+
+function setLang(lang) {
+  currentLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.lang-btn[onclick="setLang('${lang}')"]`).classList.add('active');
+  document.querySelectorAll('.t').forEach(el => {
+    const val = el.getAttribute('data-' + lang);
+    if (val !== null) el.innerHTML = val;
+  });
+}
+
+function showDay(d) {
+  document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.day-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('day' + d + 'panel').classList.add('active');
+  document.querySelectorAll('.day-tab')[d - 1].classList.add('active');
+  currentDay = d;
+}
+
+function toggleStop(el) { el.classList.toggle('expanded'); }
+
+function switchNav(nav) {
+  currentNav = nav;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav' + nav.charAt(0).toUpperCase() + nav.slice(1)).classList.add('active');
+  const dayTabs = document.getElementById('dayTabs');
+  document.querySelectorAll('.day-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('overviewPage').classList.remove('active');
+  document.getElementById('tipsPage').classList.remove('active');
+  if (nav === 'days') {
+    dayTabs.style.display = 'flex';
+    showDay(currentDay);
+  } else if (nav === 'overview') {
+    dayTabs.style.display = 'none';
+    document.getElementById('overviewPage').classList.add('active');
+  } else {
+    dayTabs.style.display = 'none';
+    document.getElementById('tipsPage').classList.add('active');
+  }
+}
+
+function switchToDay(d) { switchNav('days'); showDay(d); }
+
+// Init with Thai
+setLang('th');
+</script>
+</body>
+</html>
